@@ -18,11 +18,19 @@ export class CoffeesService {
   ) {}
 
   async findAll() {
-    return this.coffeeRepository.find();
+    return this.coffeeRepository.find({
+      relations: {
+        flavors: true,
+      },
+    });
   }
 
-  async findOne(id: any) {
-    const coffee = await this.coffeeRepository.findOne({ where: { id } });
+  async findOne(id: string | any) {
+    const coffee = await this.coffeeRepository
+      .createQueryBuilder('coffee')
+      .where('coffee.id = :id', { id })
+      .leftJoinAndSelect('coffee.flavors', 'flavor')
+      .getOne();
     if (!coffee) {
       //   throw new HttpException(`Cofffe #${id} not found`, HttpStatus.NOT_FOUND);
       throw new NotFoundException(`Cofffe #${id} not found`);
@@ -47,7 +55,7 @@ export class CoffeesService {
     return this.coffeeRepository.save(coffee);
   }
 
-  async remove(id: string | any) {
+  async remove(id: string) {
     const coffee = await this.findOne(id);
     return this.coffeeRepository.remove(coffee);
   }
